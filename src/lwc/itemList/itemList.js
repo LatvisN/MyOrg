@@ -1,6 +1,8 @@
-import { LightningElement, api, wire } from 'lwc';
+import { LightningElement, api, wire, track } from 'lwc';
+import { refreshApex } from '@salesforce/apex';
 import getAccountDetails from '@salesforce/apex/AccountController.getAccountDetails';
 import getItems from '@salesforce/apex/ItemController.getItems';
+import getPicklistValues from '@salesforce/apex/ItemController.getPicklistValues';
 
 export default class ItemList extends LightningElement {
     @api recordId;
@@ -8,7 +10,17 @@ export default class ItemList extends LightningElement {
     account;
     items = [];
     isLoading = true;
+    error;
     cartItems = [];
+
+    @track selectedFamily = 'All';
+    @track selectedType = 'All';
+    @track searchTerm = '';
+
+    familyOptions = [];
+    typeOptions = [];
+
+    wiredItemsResult;
 
     get accountNumber() {
         return this.account?.AccountNumber || 'N/A';
@@ -35,30 +47,69 @@ export default class ItemList extends LightningElement {
         }
     }
 
-    @wire(getItems, { familyFilter: 'All', typeFilter: 'All', searchTerm: '' })
-    wiredItems({ error, data }) {
-        this.isLoading = false;
+    @wire(getPicklistValues)
+    wiredPicklistValues({ error, data }) {
         if (data) {
-            this.items = data;
-        } else if (error) {
-            console.error('Error loading items:', error);
-            this.items = [];
+            this.familyOptions = data.Family.map(value => ({
+                label: value,
+                value: value
+            }));
+            this.typeOptions = data.Type.map(value => ({
+                label: value,
+                value: value
+            }));
         }
+    }
+
+    @wire(getItems, {
+        familyFilter: '$selectedFamily',
+        typeFilter: '$selectedType',
+        searchTerm: '$searchTerm'
+    })
+    wiredItems(result) {
+        this.wiredItemsResult = result;
+        this.isLoading = false;
+
+        if (result.data) {
+            this.items = result.data;
+            this.error = undefined;
+        } else if (result.error) {
+            this.error = result.error;
+            this.items = [];
+            console.error('Error loading items:', result.error);
+        }
+    }
+
+    handleFilterChange(event) {
+        const { family, type } = event.detail;
+        this.selectedFamily = family;
+        this.selectedType = type;
+        this.isLoading = true;
+    }
+
+    handleSearchChange(event) {
+        this.searchTerm = event.detail.searchTerm;
+        this.isLoading = true;
     }
 
     handleAddToCart(event) {
         const { itemId, itemName } = event.detail;
-        console.log('Item added to cart:', itemName);
-
-
         const item = this.items.find(i => i.Id === itemId);
+
         if (item) {
-            this.cartItems.push({
-                itemId: item.Id,
-                itemName: item.Name,
-                unitCost: item.Price__c,
-                amount: 1
-            });
+            const existingItem = this.cartItems.find(ci => ci.itemId === itemId);
+
+            if (existingItem) {
+                existingItem.amount += 1;
+            } else {
+                this.cartItems.push({
+                    itemId: item.Id,
+                    itemName: item.Name__c || item.Name,
+                    unitCost: item.Price__c,
+                    amount: 1
+                });
+            }
+
             console.log('Cart items:', this.cartItems);
         }
     }

@@ -2,7 +2,6 @@
     <lightning-card title="Item Purchase Tool" icon-name="standard:product">
         <div class="slds-m-around_medium">
 
-            <!-- Account Info -->
             <template if:true={account}>
                 <div class="slds-box slds-theme_shade slds-m-bottom_medium">
                     <div class="slds-grid slds-gutters">
@@ -22,17 +21,24 @@
                 </div>
             </template>
 
-            <!-- Items Count -->
-            <p class="slds-m-bottom_medium">
-                Found <strong>{itemsCount}</strong> items
-            </p>
+            <c-item-filters
+                    family-options={familyOptions}
+                    type-options={typeOptions}
+                    items-count={itemsCount}
+                    onfilterchange={handleFilterChange}
+                    onsearchchange={handleSearchChange}>
+            </c-item-filters>
 
-            <!-- Loading -->
             <template if:true={isLoading}>
                 <lightning-spinner alternative-text="Loading items..."></lightning-spinner>
             </template>
 
-            <!-- Items Grid -->
+            <template if:true={error}>
+                <div class="slds-box slds-theme_error slds-m-around_medium">
+                    <p>Error loading items</p>
+                </div>
+            </template>
+
             <template if:false={isLoading}>
                 <template if:true={hasItems}>
                     <div class="slds-grid slds-wrap slds-gutters">
@@ -49,7 +55,7 @@
 
                 <template if:false={hasItems}>
                     <div class="slds-align_absolute-center slds-m-vertical_large">
-                        <p class="slds-text-color_weak">No items found</p>
+                        <p class="slds-text-color_weak">No items found matching your criteria</p>
                     </div>
                 </template>
             </template>
