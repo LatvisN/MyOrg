@@ -1,0 +1,59 @@
+<template>
+    <lightning-card title="Item Purchase Tool" icon-name="standard:product">
+        <div class="slds-m-around_medium">
+
+            <!-- Account Info -->
+            <template if:true={account}>
+                <div class="slds-box slds-theme_shade slds-m-bottom_medium">
+                    <div class="slds-grid slds-gutters">
+                        <div class="slds-col">
+                            <p class="slds-text-title_caps">Account Name</p>
+                            <p class="slds-text-heading_small">{account.Name}</p>
+                        </div>
+                        <div class="slds-col">
+                            <p class="slds-text-title_caps">Account Number</p>
+                            <p class="slds-text-heading_small">{accountNumber}</p>
+                        </div>
+                        <div class="slds-col">
+                            <p class="slds-text-title_caps">Industry</p>
+                            <p class="slds-text-heading_small">{accountIndustry}</p>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Items Count -->
+            <p class="slds-m-bottom_medium">
+                Found <strong>{itemsCount}</strong> items
+            </p>
+
+            <!-- Loading -->
+            <template if:true={isLoading}>
+                <lightning-spinner alternative-text="Loading items..."></lightning-spinner>
+            </template>
+
+            <!-- Items Grid -->
+            <template if:false={isLoading}>
+                <template if:true={hasItems}>
+                    <div class="slds-grid slds-wrap slds-gutters">
+                        <template for:each={items} for:item="item">
+                            <div key={item.Id} class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-3 slds-m-bottom_medium">
+                                <c-item-card
+                                        item={item}
+                                        onaddtocart={handleAddToCart}>
+                                </c-item-card>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+                <template if:false={hasItems}>
+                    <div class="slds-align_absolute-center slds-m-vertical_large">
+                        <p class="slds-text-color_weak">No items found</p>
+                    </div>
+                </template>
+            </template>
+
+        </div>
+    </lightning-card>
+</template>
