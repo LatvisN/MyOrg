@@ -36,6 +36,14 @@ export default class ItemList extends NavigationMixin(LightningElement) {
     typeOptionsForCreate = [];
 
     wiredItemsResult;
+    searchTimeout;
+
+    @wire(CurrentPageReference)
+    getStateParameters(currentPageReference) {
+        if (currentPageReference && !this.recordId) {
+            this.recordId = currentPageReference.state?.c__recordId;
+        }
+    }
 
     get accountNumber() {
         return this.account?.AccountNumber || 'N/A';
@@ -69,18 +77,10 @@ export default class ItemList extends NavigationMixin(LightningElement) {
         }
     }
 
-    @wire(CurrentPageReference)
-    getStateParameters(currentPageReference) {
-        if (currentPageReference && !this.recordId) {
-            this.recordId = currentPageReference.state.c__recordId;
-        }
-    }
-
     @wire(isCurrentUserManager)
     wiredIsManager({ error, data }) {
         if (data !== undefined) {
             this.isManager = data;
-            console.log('Is manager:', data);
         }
     }
 
@@ -124,15 +124,23 @@ export default class ItemList extends NavigationMixin(LightningElement) {
         }
     }
 
-    handleFilterChange(event) {
-        const { family, type } = event.detail;
-        this.selectedFamily = family;
-        this.selectedType = type;
+    handleSearchInputChange(event) {
+        const searchValue = event.target.value;
+
+        clearTimeout(this.searchTimeout);
+        this.searchTimeout = setTimeout(() => {
+            this.searchTerm = searchValue;
+            this.isLoading = true;
+        }, 300);
+    }
+
+    handleTypeFilterChange(event) {
+        this.selectedType = event.detail.value;
         this.isLoading = true;
     }
 
-    handleSearchChange(event) {
-        this.searchTerm = event.detail.searchTerm;
+    handleFamilyFilterChange(event) {
+        this.selectedFamily = event.detail.value;
         this.isLoading = true;
     }
 
@@ -166,7 +174,6 @@ export default class ItemList extends NavigationMixin(LightningElement) {
             }
 
             this.cartItems = updatedCart;
-
             this.showToast('Added to Cart', `${item.Name__c || item.Name} added to cart`, 'success');
         }
     }
@@ -190,7 +197,6 @@ export default class ItemList extends NavigationMixin(LightningElement) {
             }
 
             this.cartItems = updatedCart;
-
             this.showToast('Added to Cart', `${item.Name__c || item.Name} added to cart`, 'success');
         }
     }
@@ -242,7 +248,6 @@ export default class ItemList extends NavigationMixin(LightningElement) {
     }
 
     handleItemCreated(event) {
-        console.log('Item created:', event.detail.item);
         this.showCreateItemModal = false;
         this.showToast('Success', 'Item created successfully!', 'success');
         return refreshApex(this.wiredItemsResult);

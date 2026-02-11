@@ -1,5 +1,4 @@
 import { LightningElement, api } from 'lwc';
-//import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
 export default class ItemCard extends LightningElement {
     @api item;
@@ -24,8 +23,11 @@ export default class ItemCard extends LightningElement {
         return this.item?.Type__c || 'N/A';
     }
 
+    get hasImage() {
+        return this.item?.Image__c ? true : false;
+    }
+
     handleViewDetails() {
-        console.log('Details clicked for item:', this.item);
         this.dispatchEvent(new CustomEvent('viewdetails', {
             detail: { item: this.item }
         }));
@@ -33,7 +35,10 @@ export default class ItemCard extends LightningElement {
 
     handleAddToCart() {
         this.dispatchEvent(new CustomEvent('addtocart', {
-            detail: { itemId: this.item.Id, itemName: this.item.Name__c || this.item.Name }
+            detail: {
+                itemId: this.item.Id,
+                itemName: this.item.Name__c || this.item.Name
+            }
         }));
     }
 }

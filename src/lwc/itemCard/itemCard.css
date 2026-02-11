@@ -1,0 +1,42 @@
+.item-card {
+    height: 100%;
+    border: 1px solid #dddbda;
+    border-radius: 0.25rem;
+}
+
+.image-container {
+    height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f3f2f2;
+    border-radius: 0.25rem;
+    overflow: hidden;
+}
+
+.item-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.placeholder-image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+.description-text {
+    min-height: 40px;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.price-text {
+    color: #0070d2;
+    font-weight: bold;
+}
