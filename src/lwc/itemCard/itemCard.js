@@ -4,9 +4,9 @@ import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 export default class ItemCard extends LightningElement {
     @api item;
 
-get itemName() {
-    return this.item?.Name__c || this.item?.Name || 'Unknown Item';
-}
+    get itemName() {
+        return this.item?.Name__c || this.item?.Name || 'Unknown Item';
+    }
 
     get itemDescription() {
         return this.item?.Description__c || 'No description';
@@ -24,15 +24,16 @@ get itemName() {
         return this.item?.Type__c || 'N/A';
     }
 
+    handleViewDetails() {
+        console.log('Details clicked for item:', this.item);
+        this.dispatchEvent(new CustomEvent('viewdetails', {
+            detail: { item: this.item }
+        }));
+    }
+
     handleAddToCart() {
         this.dispatchEvent(new CustomEvent('addtocart', {
-            detail: { itemId: this.item.Id, itemName: this.item.Name }
-        }));
-
-        this.dispatchEvent(new ShowToastEvent({
-            title: 'Success',
-            message: this.item.Name + ' added to cart',
-            variant: 'success'
+            detail: { itemId: this.item.Id, itemName: this.item.Name__c || this.item.Name }
         }));
     }
 }

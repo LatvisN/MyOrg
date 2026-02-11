@@ -3,7 +3,7 @@ public with sharing class ItemController {
     @AuraEnabled(cacheable=true)
     public static List<Item__c> getItems(String familyFilter, String typeFilter, String searchTerm) {
         try {
-            String query = 'SELECT Id, Name, Description__c, Type__c, Family__c, Price__c';
+            String query = 'SELECT Id, Name, Description__c, Type__c, Family__c, Image__c, Price__c';
 
             if (Schema.sObjectType.Item__c.fields.Name__c.isAccessible()) {
                 query += ', Name__c';
@@ -68,5 +68,42 @@ public with sharing class ItemController {
         picklistMap.put('Type', typeValues);
 
         return picklistMap;
+    }
+
+    @AuraEnabled
+    public static Item__c createItem(String name, String description, String itemType,
+            String family, Decimal price) {
+        System.debug('=== createItem START ===');
+        System.debug('Creating item with name: ' + name);
+
+        Item__c newItem = new Item__c(
+                Name__c = name,
+                Description__c = description,
+                Type__c = itemType,
+                Family__c = family,
+                Price__c = price
+        );
+
+        try {
+            System.debug('Calling Unsplash API for item: ' + name);
+            String imageUrl = UnsplashService.getImageUrl(name);
+
+            System.debug('Received image URL: ' + imageUrl);
+
+            if (String.isNotBlank(imageUrl)) {
+                newItem.Image__c = imageUrl;
+                System.debug('Image set to item');
+            } else {
+                System.debug('No image URL returned from Unsplash');
+            }
+        } catch (Exception e) {
+            System.debug('Error getting image: ' + e.getMessage());
+        }
+
+        System.debug('Inserting item...');
+        insert newItem;
+        System.debug('Item created with Id: ' + newItem.Id);
+
+        return newItem;
     }
 }

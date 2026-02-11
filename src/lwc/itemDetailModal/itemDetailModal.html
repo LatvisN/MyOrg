@@ -1,0 +1,65 @@
+<template>
+    <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
+        <div class="slds-modal__container">
+            <header class="slds-modal__header">
+                <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                        onclick={handleClose}>
+                    <lightning-icon icon-name="utility:close" size="small" variant="inverse"></lightning-icon>
+                </button>
+                <h2 class="slds-modal__title">{itemName}</h2>
+            </header>
+
+            <div class="slds-modal__content slds-p-around_medium">
+                <div class="slds-grid slds-gutters">
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
+                        <div class="image-container">
+                            <template if:true={hasImage}>
+                                <img src={item.Image__c} alt={itemName} class="item-image"/>
+                            </template>
+                            <template if:false={hasImage}>
+                                <div class="placeholder-image">
+                                    <lightning-icon icon-name="standard:product" size="large"></lightning-icon>
+                                    <p class="slds-m-top_small">No image available</p>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
+                        <dl class="slds-list_horizontal slds-wrap">
+                            <dt class="slds-item_label slds-text-color_weak slds-truncate">Family:</dt>
+                            <dd class="slds-item_detail slds-truncate">{item.Family__c}</dd>
+
+                            <dt class="slds-item_label slds-text-color_weak slds-truncate">Type:</dt>
+                            <dd class="slds-item_detail slds-truncate">{item.Type__c}</dd>
+
+                            <dt class="slds-item_label slds-text-color_weak slds-truncate">Price:</dt>
+                            <dd class="slds-item_detail slds-truncate">
+                                <span class="slds-text-heading_small slds-text-color_success">${formattedPrice}</span>
+                            </dd>
+
+                            <dt class="slds-item_label slds-text-color_weak slds-size_1-of-1 slds-m-top_medium">Description:</dt>
+                            <dd class="slds-item_detail slds-size_1-of-1">{description}</dd>
+                        </dl>
+
+                        <div class="slds-m-top_large">
+                            <lightning-button
+                                    label="Add to Cart"
+                                    variant="brand"
+                                    icon-name="utility:cart"
+                                    onclick={handleAddToCart}
+                                    class="slds-m-right_small">
+                            </lightning-button>
+                            <lightning-button
+                                    label="Close"
+                                    variant="neutral"
+                                    onclick={handleClose}>
+                            </lightning-button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <div class="slds-backdrop slds-backdrop_open"></div>
+</template>

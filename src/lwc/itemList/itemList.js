@@ -3,8 +3,14 @@ import { refreshApex } from '@salesforce/apex';
 import getAccountDetails from '@salesforce/apex/AccountController.getAccountDetails';
 import getItems from '@salesforce/apex/ItemController.getItems';
 import getPicklistValues from '@salesforce/apex/ItemController.getPicklistValues';
+import isCurrentUserManager from '@salesforce/apex/UserController.isCurrentUserManager';
 
 export default class ItemList extends LightningElement {
+    isManager = false;
+    showCreateItemModal = false;
+    familyOptionsForCreate = [];
+    typeOptionsForCreate = [];
+
     @api recordId;
 
     account;
@@ -12,6 +18,9 @@ export default class ItemList extends LightningElement {
     isLoading = true;
     error;
     cartItems = [];
+
+    showDetailModal = false;
+    selectedItem = null;
 
     @track selectedFamily = 'All';
     @track selectedType = 'All';
@@ -38,6 +47,15 @@ export default class ItemList extends LightningElement {
         return this.items && this.items.length > 0;
     }
 
+    @wire(isCurrentUserManager)
+    wiredIsManager({ error, data }) {
+        if (data !== undefined) {
+            this.isManager = data;
+            console.log('Is manager:', data);
+        }
+    }
+
+
     @wire(getAccountDetails, { accountId: '$recordId' })
     wiredAccount({ error, data }) {
         if (data) {
@@ -58,6 +76,13 @@ export default class ItemList extends LightningElement {
                 label: value,
                 value: value
             }));
+
+            this.familyOptionsForCreate = data.Family
+                .filter(v => v !== 'All')
+                .map(value => ({ label: value, value: value }));
+            this.typeOptionsForCreate = data.Type
+                .filter(v => v !== 'All')
+                .map(value => ({ label: value, value: value }));
         }
     }
 
@@ -80,6 +105,21 @@ export default class ItemList extends LightningElement {
         }
     }
 
+    handleOpenCreateItem() {
+        this.showCreateItemModal = true;
+    }
+
+    handleCloseCreateItem() {
+        this.showCreateItemModal = false;
+    }
+
+    handleItemCreated(event) {
+        console.log('Item created:', event.detail.item);
+        this.showCreateItemModal = false;
+        return refreshApex(this.wiredItemsResult);
+    }
+
+
     handleFilterChange(event) {
         const { family, type } = event.detail;
         this.selectedFamily = family;
@@ -90,6 +130,34 @@ export default class ItemList extends LightningElement {
     handleSearchChange(event) {
         this.searchTerm = event.detail.searchTerm;
         this.isLoading = true;
+    }
+
+handleViewDetails(event) {
+    console.log('=== handleViewDetails START ===');
+    console.log('Event received:', event);
+    console.log('Event detail:', event.detail);
+    console.log('Current showDetailModal:', this.showDetailModal);
+
+    this.selectedItem = event.detail.item;
+    this.showDetailModal = true;
+
+    console.log('After update - showDetailModal:', this.showDetailModal);
+    console.log('After update - selectedItem:', this.selectedItem);
+    console.log('=== handleViewDetails END ===');
+}
+
+    handleCloseDetailModal() {
+        this.showDetailModal = false;
+        this.selectedItem = null;
+    }
+
+    handleAddToCartFromModal(event) {
+        this.handleAddToCart({
+            detail: {
+                itemId: event.detail.item.Id,
+                itemName: event.detail.item.Name__c || event.detail.item.Name
+            }
+        });
     }
 
     handleAddToCart(event) {
