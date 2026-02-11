@@ -4,12 +4,16 @@ import getAccountDetails from '@salesforce/apex/AccountController.getAccountDeta
 import getItems from '@salesforce/apex/ItemController.getItems';
 import getPicklistValues from '@salesforce/apex/ItemController.getPicklistValues';
 import isCurrentUserManager from '@salesforce/apex/UserController.isCurrentUserManager';
+import { NavigationMixin } from 'lightning/navigation';
+import createPurchase from '@salesforce/apex/PurchaseController.createPurchase';
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
-export default class ItemList extends LightningElement {
+export default class ItemList extends NavigationMixin(LightningElement) {
     isManager = false;
     showCreateItemModal = false;
     familyOptionsForCreate = [];
     typeOptionsForCreate = [];
+    showCartModal = false;
 
     @api recordId;
 
@@ -47,6 +51,7 @@ export default class ItemList extends LightningElement {
         return this.items && this.items.length > 0;
     }
 
+    //менеджер ли
     @wire(isCurrentUserManager)
     wiredIsManager({ error, data }) {
         if (data !== undefined) {
@@ -55,7 +60,133 @@ export default class ItemList extends LightningElement {
         }
     }
 
+    //корзина
+    get cartButtonLabel() {
+        const count = this.cartItems.reduce((sum, item) => sum + item.amount, 0);
+        return `Cart (${count})`;
+    }
 
+    get cartItemsForModal() {
+        return this.cartItems.map(item => ({
+            ...item,
+            subtotal: (item.unitCost * item.amount).toFixed(2)
+        }));
+    }
+
+    get cartButtonLabel() {
+        const count = this.cartItems.reduce((sum, item) => sum + item.amount, 0);
+        return count > 0 ? `Cart (${count})` : 'Cart';
+    }
+
+    get cartCount() {
+        return this.cartItems.reduce((sum, item) => sum + item.amount, 0);
+    }
+
+    get hasItemsInCart() {
+        return this.cartItems.length > 0;
+    }
+
+    handleOpenCart() {
+        this.showCartModal = true;
+    }
+
+    handleCloseCart() {
+        this.showCartModal = false;
+    }
+
+handleAddToCart(event) {
+    const { itemId, itemName } = event.detail;
+    const item = this.items.find(i => i.Id === itemId);
+
+    if (item) {
+        let updatedCart = [...this.cartItems];
+        const existingItem = updatedCart.find(ci => ci.itemId === itemId);
+
+        if (existingItem) {
+            existingItem.amount += 1;
+        } else {
+            updatedCart.push({
+                itemId: item.Id,
+                itemName: item.Name__c || item.Name,
+                unitCost: item.Price__c,
+                amount: 1
+            });
+        }
+
+        this.cartItems = updatedCart;
+
+        // Отладка
+        console.log('About to show toast for:', item.Name__c || item.Name);
+
+        try {
+            this.dispatchEvent(new ShowToastEvent({
+                title: 'Added to Cart',
+                message: `${item.Name__c || item.Name} added to cart`,
+                variant: 'success'
+            }));
+            console.log('Toast dispatched successfully');
+        } catch (error) {
+            console.error('Toast error:', error);
+        }
+    }
+}
+
+    async handleCheckout() {
+        try {
+            this.isLoading = true;
+            const purchaseId = await createPurchase({
+                accountId: this.recordId,
+                cartItems: this.cartItems
+            });
+
+            this.showCartModal = false;
+            this.cartItems = [];
+
+            this[NavigationMixin.Navigate]({
+                type: 'standard__recordPage',
+                attributes: {
+                    recordId: purchaseId,
+                    objectApiName: 'Purchase__c',
+                    actionName: 'view'
+                }
+            });
+        } catch (error) {
+            console.error('Checkout error:', error);
+        } finally {
+            this.isLoading = false;
+        }
+    }
+
+    handleAddToCartFromModal(event) {
+        const item = event.detail.item;
+
+        if (item) {
+            let updatedCart = [...this.cartItems];
+
+            const existingItem = updatedCart.find(ci => ci.itemId === item.Id);
+
+            if (existingItem) {
+                existingItem.amount += 1;
+            } else {
+                updatedCart.push({
+                    itemId: item.Id,
+                    itemName: item.Name__c || item.Name,
+                    unitCost: item.Price__c,
+                    amount: 1
+                });
+            }
+
+            this.cartItems = updatedCart;
+
+            this.dispatchEvent(new ShowToastEvent({
+                title: 'Success',
+                message: `${item.Name__c || item.Name} added to cart`,
+                variant: 'success'
+            }));
+        }
+    }
+
+    //данные акка
     @wire(getAccountDetails, { accountId: '$recordId' })
     wiredAccount({ error, data }) {
         if (data) {

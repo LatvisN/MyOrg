@@ -1,5 +1,5 @@
 import { LightningElement, api } from 'lwc';
-import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+//import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
 export default class ItemCard extends LightningElement {
     @api item;

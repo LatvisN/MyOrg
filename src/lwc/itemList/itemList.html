@@ -1,5 +1,5 @@
 <template>
-    <lightning-card title="Item Purchase Tool Test" icon-name="standard:product">
+    <lightning-card title="Item Purchase Tool" icon-name="standard:product">
         <div class="slds-m-around_medium">
 
             <template if:true={account}>
@@ -29,16 +29,25 @@
                     onsearchchange={handleSearchChange}>
             </c-item-filters>
 
-            <template if:true={isManager}>
-                <div class="slds-m-vertical_medium">
+            <div class="slds-m-vertical_medium slds-grid slds-grid_align-spread">
+                <template if:true={isManager}>
                     <lightning-button
                             label="Create New Item"
                             icon-name="utility:add"
                             variant="brand"
                             onclick={handleOpenCreateItem}>
                     </lightning-button>
+                </template>
+
+                <div class="slds-is-relative">
+                    <lightning-button
+                            label="Cart"
+                            icon-name="utility:cart"
+                            variant="neutral"
+                            onclick={handleOpenCart}>
+                    </lightning-button>
                 </div>
-            </template>
+            </div>
 
             <template if:true={isLoading}>
                 <lightning-spinner alternative-text="Loading items..."></lightning-spinner>
@@ -84,5 +93,13 @@
                 onclose={handleCloseCreateItem}
                 onitemcreated={handleItemCreated}>
         </c-create-item-modal>
+    </template>
+
+    <template if:true={showCartModal}>
+        <c-cart-modal
+                cart-items={cartItemsForModal}
+                onclose={handleCloseCart}
+                oncheckout={handleCheckout}>
+        </c-cart-modal>
     </template>
 </template>
